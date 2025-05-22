@@ -5,56 +5,42 @@ import React, { useEffect, useState, useRef } from 'react';
 interface ColorState {
   isActive: boolean;
   color: string;
+  char: string;
 }
 
+const getRandomAscii = () => {
+  const chars = ['█', '▓', '▒', '░', '■', '▪', '●', '◆', '★', '✦'];
+  return chars[Math.floor(Math.random() * chars.length)];
+};
+
 const getWarmColor = (r: number, g: number, b: number): string => {
-  // Black/dark shades - more sensitive
-  if (r < 85 && g < 85 && b < 85) {
-    return '#000000'; // Pure black
-  }
-  // White/bright shades
-  if (r > 200 && g > 200 && b > 200) {
-    return '#FFFFFF'; // Pure white
-  }
-  // Yellow shades
-  if (g > 100 && b < g * 0.8) {
-    return '#F9B10A'; // Gold
-  }
-  // Orange shades
-  if (g > 60 && g < r * 0.8 && b < g * 0.9) {
-    return '#F07015'; // Orange
-  }
-  // Brown shades
-  return '#F03D15'; // Peru (brownish)
+  // Simplified color detection for better performance
+  if (r < 85 && g < 85 && b < 85) return '#000000';
+  if (r > 200 && g > 200 && b > 200) return '#FFFFFF';
+  if (g > 100 && b < g * 0.8) return '#F9B10A';
+  if (g > 60 && g < r * 0.8) return '#F07015';
+  return '#F03D15';
 };
 
 const isTargetColor = (r: number, g: number, b: number): boolean => {
-  // Black detection - more sensitive
+  // Simplified detection for better performance
   if (r < 85 && g < 85 && b < 85) return true;
-  
-  // White detection
   if (r > 200 && g > 200 && b > 200) return true;
-  
-  // More lenient detection for yellow, brown, and orange tones
-  // Ensure red is the dominant color
   if (r > g && r > b) {
-    // For yellows: high red, high green, low blue
     if (g > 100 && b < g * 0.8) return true;
-    
-    // For oranges: high red, medium green, low blue
-    if (g > 60 && g < r * 0.8 && b < g * 0.9) return true;
-    
-    // For browns: moderate red, lower green, lowest blue
-    if (g > 40 && g < r * 0.9 && b < g * 0.9) return true;
+    if (g > 60 && g < r * 0.8) return true;
+    if (g > 40 && g < r * 0.9) return true;
   }
-  
   return false;
 };
 
-const CircleGrid: React.FC<{ width: number; height: number; videoRef: React.RefObject<HTMLVideoElement | null> }> = ({ width, height, videoRef }) => {
+const AsciiColorGrid: React.FC<{ width: number; height: number; videoRef: React.RefObject<HTMLVideoElement | null> }> = ({ width, height, videoRef }) => {
   const [colorStates, setColorStates] = useState<ColorState[][]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const CELL_SIZE = 8; // 8px grid
+  const frameRef = useRef<number | undefined>(undefined);
+  const lastFrameTime = useRef<number>(0);
+  const FRAME_INTERVAL = 1000 / 30; // Cap at 30 FPS
+  const CELL_SIZE = 12; // Increased cell size for better performance
 
   useEffect(() => {
     const cols = Math.ceil(width / CELL_SIZE);
@@ -63,58 +49,79 @@ const CircleGrid: React.FC<{ width: number; height: number; videoRef: React.RefO
     const initialStates = Array(rows).fill(0).map(() =>
       Array(cols).fill(0).map(() => ({
         isActive: false,
-        color: '#FFD700'
+        color: '#FFD700',
+        char: getRandomAscii()
       }))
     );
     
     setColorStates(initialStates);
+
+    return () => {
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
   }, [width, height]);
 
   useEffect(() => {
     if (!videoRef.current || !canvasRef.current || !colorStates.length) return;
 
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
 
     canvas.width = width;
     canvas.height = height;
 
-    const analyzeFrame = () => {
+    const analyzeFrame = (timestamp: number) => {
       if (!videoRef.current || !ctx) return;
-      
-      ctx.drawImage(videoRef.current, 0, 0, width, height);
-      
-      const newStates = colorStates.map((row, i) =>
-        row.map((cell, j) => {
-          const x = j * CELL_SIZE;
-          const y = i * CELL_SIZE;
-          const imageData = ctx.getImageData(x, y, CELL_SIZE, CELL_SIZE);
-          
-          // Calculate average color for the cell
-          let r = 0, g = 0, b = 0;
-          for (let p = 0; p < imageData.data.length; p += 4) {
-            r += imageData.data[p];
-            g += imageData.data[p + 1];
-            b += imageData.data[p + 2];
-          }
-          const pixels = (CELL_SIZE * CELL_SIZE);
-          r = r / pixels;
-          g = g / pixels;
-          b = b / pixels;
 
-          return {
-            isActive: isTargetColor(r, g, b),
-            color: getWarmColor(r, g, b)
-          };
-        })
-      );
+      const elapsed = timestamp - lastFrameTime.current;
+      
+      if (elapsed > FRAME_INTERVAL) {
+        lastFrameTime.current = timestamp;
+        
+        ctx.drawImage(videoRef.current, 0, 0, width, height);
+        
+        const newStates = colorStates.map((row, i) =>
+          row.map((cell, j) => {
+            const x = j * CELL_SIZE;
+            const y = i * CELL_SIZE;
+            const imageData = ctx.getImageData(x, y, CELL_SIZE, CELL_SIZE);
+            
+            let r = 0, g = 0, b = 0;
+            // Sample fewer pixels for performance
+            for (let p = 0; p < imageData.data.length; p += 16) {
+              r += imageData.data[p];
+              g += imageData.data[p + 1];
+              b += imageData.data[p + 2];
+            }
+            const samples = Math.ceil(imageData.data.length / 16);
+            r = r / samples;
+            g = g / samples;
+            b = b / samples;
 
-      setColorStates(newStates);
-      requestAnimationFrame(analyzeFrame);
+            return {
+              ...cell,
+              isActive: isTargetColor(r, g, b),
+              color: getWarmColor(r, g, b)
+            };
+          })
+        );
+
+        setColorStates(newStates);
+      }
+      
+      frameRef.current = requestAnimationFrame(analyzeFrame);
     };
 
-    analyzeFrame();
+    frameRef.current = requestAnimationFrame(analyzeFrame);
+
+    return () => {
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
   }, [videoRef, width, height, colorStates.length]);
 
   return (
@@ -131,7 +138,11 @@ const CircleGrid: React.FC<{ width: number; height: number; videoRef: React.RefO
         height: '100%',
         display: 'grid',
         gridTemplateColumns: `repeat(${Math.ceil(width / CELL_SIZE)}, ${CELL_SIZE}px)`,
+        fontSize: '14px',
+        lineHeight: '14px',
         userSelect: 'none',
+        fontFamily: 'monospace',
+        fontWeight: 900,
       }}>
         {colorStates.flat().map((cell, i) => (
           <div
@@ -142,18 +153,13 @@ const CircleGrid: React.FC<{ width: number; height: number; videoRef: React.RefO
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              opacity: cell.isActive ? 0.8 : 0,
-              transition: 'opacity 0.2s ease-in-out',
+              visibility: cell.isActive ? 'visible' : 'hidden',
+              color: cell.color,
+              transform: `scale(${cell.isActive ? 1 : 0})`,
+              fontWeight: 'bold',
             }}
           >
-            <div
-              style={{
-                width: CELL_SIZE - 2,
-                height: CELL_SIZE - 2,
-                borderRadius: '50%',
-                backgroundColor: cell.color,
-              }}
-            />
+            {cell.char}
           </div>
         ))}
       </div>
@@ -161,7 +167,7 @@ const CircleGrid: React.FC<{ width: number; height: number; videoRef: React.RefO
   );
 };
 
-const AnimationFrame4: React.FC = () => {
+const AnimationFrame5: React.FC = () => {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -188,7 +194,7 @@ const AnimationFrame4: React.FC = () => {
         width: '100%',
         height: 'auto',
         aspectRatio: '16 / 9',
-        background: '#011004',
+        background: '#5269BE',
         borderRadius: 32,
         display: 'block',
         maxWidth: '100%',
@@ -199,7 +205,7 @@ const AnimationFrame4: React.FC = () => {
     >
       <video
         ref={videoRef}
-        src="/flower-loop5.mp4"
+        src="/flower-loop6.mp4"
         style={{
           width: '100%',
           height: '100%',
@@ -213,7 +219,7 @@ const AnimationFrame4: React.FC = () => {
         playsInline
         onLoadedMetadata={(e) => {
           if (videoRef.current) {
-            videoRef.current.playbackRate = 0.5;
+            videoRef.current.playbackRate = 1.0;
           }
         }}
       />
@@ -229,7 +235,7 @@ const AnimationFrame4: React.FC = () => {
           WebkitBackdropFilter: 'blur(16px)',
         }}
       >
-        <CircleGrid 
+        <AsciiColorGrid 
           width={dimensions.width} 
           height={dimensions.height} 
           videoRef={videoRef}
@@ -239,4 +245,4 @@ const AnimationFrame4: React.FC = () => {
   );
 };
 
-export default AnimationFrame4;
+export default AnimationFrame5;
