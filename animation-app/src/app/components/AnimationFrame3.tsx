@@ -17,9 +17,9 @@ const isTargetColor = (r: number, g: number, b: number): boolean => {
   // Convert RGB values to hex for easier comparison with target colors
   const hex = `${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase();
   
-  // Purple detection (602E96, 360183) - more sensitive
-  if ((r > 70 && r < 120 && g < 60 && b > 120) || // 602E96-like
-      (r > 30 && r < 80 && g < 40 && b > 110)) return true; // 360183-like
+  // Purple detection (602E96, 360183) - highly sensitive
+  if ((r > 50 && r < 140 && g < 80 && b > 100) || // 602E96-like (broader range)
+      (r > 20 && r < 100 && g < 60 && b > 90)) return true; // 360183-like (broader range)
   
   // Green detection (214A01, 758750) - more sensitive
   if ((r < 60 && g > 50 && g < 100 && b < 40) || // 214A01-like
@@ -176,7 +176,7 @@ const AnimationFrame3: React.FC = () => {
     >
       <video
         ref={videoRef}
-        src="/flower-loop-3.mp4"
+        src="/flower-loop4.mp4"
         style={{
           width: '100%',
           height: '100%',
