@@ -14,12 +14,21 @@ const getRandomAscii = () => {
 };
 
 const isTargetColor = (r: number, g: number, b: number): boolean => {
-  // Yellow detection - more sensitive to yellows
-  if (r > 180 && g > 180 && b < 150) return true;
-  // Green detection - more sensitive to greens, including darker ones
-  if (g > 100 && g > r * 1.2 && g > b * 1.2) return true;
-  // Redish pink detection - more sensitive to pinks
-  if (r > 180 && g < 180 && b > 80) return true;
+  // Convert RGB values to hex for easier comparison with target colors
+  const hex = `${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase();
+  
+  // Purple detection (602E96, 360183) - more sensitive
+  if ((r > 70 && r < 120 && g < 60 && b > 120) || // 602E96-like
+      (r > 30 && r < 80 && g < 40 && b > 110)) return true; // 360183-like
+  
+  // Green detection (214A01, 758750) - more sensitive
+  if ((r < 60 && g > 50 && g < 100 && b < 40) || // 214A01-like
+      (r > 90 && r < 140 && g > 110 && g < 160 && b > 60 && b < 110)) return true; // 758750-like
+  
+  // Orange/Brown detection (FA7502, B99048) - more sensitive
+  if ((r > 230 && g > 90 && g < 140 && b < 40) || // FA7502-like
+      (r > 160 && r < 210 && g > 120 && g < 170 && b > 50 && b < 100)) return true; // B99048-like
+  
   return false;
 };
 
@@ -167,7 +176,7 @@ const AnimationFrame: React.FC = () => {
     >
       <video
         ref={videoRef}
-        src="/flower-loop.mp4"
+        src="/flower-loop-3.mp4"
         style={{
           width: '100%',
           height: '100%',
@@ -178,6 +187,11 @@ const AnimationFrame: React.FC = () => {
         loop
         muted
         playsInline
+        onLoadedMetadata={(e) => {
+          if (videoRef.current) {
+            videoRef.current.playbackRate = 0.5;
+          }
+        }}
       />
       <div
         style={{

@@ -5,15 +5,21 @@ import { useEffect, useState } from 'react';
 
 interface VersionMenuProps {
   isOpen: boolean;
+  onVersionChange: (version: number) => void;
 }
 
-export default function VersionMenu({ isOpen }: VersionMenuProps) {
+export default function VersionMenu({ isOpen, onVersionChange }: VersionMenuProps) {
   const [selectedVersion, setSelectedVersion] = useState(1);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleVersionChange = (version: number) => {
+    setSelectedVersion(version);
+    onVersionChange(version);
+  };
 
   if (!mounted) return null;
 
@@ -82,7 +88,7 @@ export default function VersionMenu({ isOpen }: VersionMenuProps) {
         {[1, 2, 3].map((version) => (
           <button
             key={version}
-            onClick={() => setSelectedVersion(version)}
+            onClick={() => handleVersionChange(version)}
             style={{
               display: 'flex',
               alignItems: 'center',

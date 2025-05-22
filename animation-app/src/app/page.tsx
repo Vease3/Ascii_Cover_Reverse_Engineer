@@ -2,11 +2,17 @@
 
 import { useState } from 'react';
 import AnimationFrame from './components/AnimationFrame';
+import AnimationFrame2 from './components/AnimationFrame2';
 import MenuButton from './components/MenuButton';
 import VersionMenu from './components/VersionMenu';
 
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [selectedVersion, setSelectedVersion] = useState(1);
+
+  const handleVersionChange = (version: number) => {
+    setSelectedVersion(version);
+  };
 
   return (
     <main
@@ -24,9 +30,9 @@ export default function Home() {
     >
       <div style={{ position: 'absolute', top: -56, right: -56 }}>
         <MenuButton onToggle={setIsMenuOpen} />
-        <VersionMenu isOpen={isMenuOpen} />
+        <VersionMenu isOpen={isMenuOpen} onVersionChange={handleVersionChange} />
       </div>
-      <AnimationFrame />
+      {selectedVersion === 1 ? <AnimationFrame /> : selectedVersion === 2 ? <AnimationFrame2 /> : null}
     </main>
   );
 }
