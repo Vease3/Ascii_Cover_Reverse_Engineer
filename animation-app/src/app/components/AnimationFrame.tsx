@@ -14,12 +14,12 @@ const getRandomAscii = () => {
 };
 
 const isTargetColor = (r: number, g: number, b: number): boolean => {
-  // Yellow detection
-  if (r > 200 && g > 200 && b < 100) return true;
-  // Green detection
-  if (g > 150 && r < 150 && b < 150) return true;
-  // Redish pink detection
-  if (r > 200 && g < 150 && b > 100) return true;
+  // Yellow detection - more sensitive to yellows
+  if (r > 180 && g > 180 && b < 150) return true;
+  // Green detection - more sensitive to greens, including darker ones
+  if (g > 100 && g > r * 1.2 && g > b * 1.2) return true;
+  // Redish pink detection - more sensitive to pinks
+  if (r > 180 && g < 180 && b > 80) return true;
   return false;
 };
 
@@ -187,7 +187,7 @@ const AnimationFrame: React.FC = () => {
           width: '100%',
           height: '100%',
           pointerEvents: 'none',
-          backdropFilter: 'blur(24px)',
+          backdropFilter: 'blur(32px)',
           WebkitBackdropFilter: 'blur(16px)',
         }}
       >
