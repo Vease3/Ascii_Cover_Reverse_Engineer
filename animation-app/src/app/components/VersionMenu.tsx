@@ -86,7 +86,7 @@ export default function VersionMenu({ isOpen, onVersionChange }: VersionMenuProp
           boxSizing: 'border-box',
         }}
       >
-        {[1, 2, 3, 4, 5].map((version) => (
+        {[1, 2, 3, 4, 5, 6].map((version) => (
           <button
             key={version}
             onClick={() => handleVersionChange(version)}
