@@ -127,7 +127,6 @@ const AsciiGrid: React.FC<{ width: number; height: number; videoRef: React.RefOb
               alignItems: 'center',
               justifyContent: 'center',
               opacity: cell.isActive ? 1 : 0,
-              transition: 'opacity 0.2s ease-in-out',
             }}
           >
             {cell.char}
