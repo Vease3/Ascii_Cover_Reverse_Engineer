@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import AnimationFrame from './components/AnimationFrame';
 import AnimationFrame2 from './components/AnimationFrame2';
+import AnimationFrame3 from './components/AnimationFrame3';
 import MenuButton from './components/MenuButton';
 import VersionMenu from './components/VersionMenu';
 
@@ -32,7 +33,9 @@ export default function Home() {
         <MenuButton onToggle={setIsMenuOpen} />
         <VersionMenu isOpen={isMenuOpen} onVersionChange={handleVersionChange} />
       </div>
-      {selectedVersion === 1 ? <AnimationFrame /> : selectedVersion === 2 ? <AnimationFrame2 /> : null}
+      {selectedVersion === 1 ? <AnimationFrame /> : 
+       selectedVersion === 2 ? <AnimationFrame2 /> : 
+       selectedVersion === 3 ? <AnimationFrame3 /> : null}
     </main>
   );
 }

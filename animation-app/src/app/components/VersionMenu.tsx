@@ -2,6 +2,7 @@
 
 import { Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import AnimationFrame3 from './AnimationFrame3';
 
 interface VersionMenuProps {
   isOpen: boolean;
