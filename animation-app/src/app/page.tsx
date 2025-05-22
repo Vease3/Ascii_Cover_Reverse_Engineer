@@ -1,7 +1,20 @@
+import AnimationFrame from './components/AnimationFrame';
+
 export default function Home() {
   return (
-    <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <h1>Hello, World!</h1>
+    <main
+      style={{
+        margin: 80,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 'calc(100vw - 160px)',
+        height: 'calc(100vh - 160px)',
+        boxSizing: 'border-box',
+      }}
+    >
+      <AnimationFrame />
     </main>
   );
 }
